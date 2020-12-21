@@ -56,6 +56,25 @@ class TextLoader:
     for file in train_files:
       print(file)
       doc = xml4h.parse(file)
+
+      #YAJUR CODE
+      #This iterates through reference answers
+      ref_ans_arr = []
+      #Reference answers can either be iterable or only have one, so this if/else accounts for that
+      if isinstance(doc.question.referenceAnswers.referenceAnswer, list):
+        ref_ans_arr = doc.question.referenceAnswers.referenceAnswer
+      else:
+        ref_ans_arr.append(doc.question.referenceAnswers.referenceAnswer)
+
+      for ref_ans in ref_ans_arr:
+        #no need for cat because reference answers are all correct
+        #print(ref_ans.text)
+        line = [token.text for token in tok.tokenizer(ref_ans.text)]
+        train_data["correct"].append(line)
+        for token in line:
+          token_set.add(token)
+
+      #This iterates through student answers
       for st_ans in doc.question.studentAnswers.studentAnswer:
         #print(st_ans.text)
         cat = st_ans["accuracy"]
@@ -94,6 +113,7 @@ class TextLoader:
       cat_data = train_data[cat]
       print(cat, len(train_data[cat]))
       all_data += [(dat, cat) for dat in cat_data]
+
 
     for cat in test_data:
       cat_data = test_data[cat]

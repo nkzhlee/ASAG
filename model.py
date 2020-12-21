@@ -17,6 +17,7 @@ class LSTMClassifier(nn.Module):
 		self.vocab_size = vocab_size
 
 		#self.embedding = nn.Embedding(vocab_size, embedding_dim, weights=[embedding_matrix])
+		#print("Torch.float tensor: ", torch.FloatTensor(embedding_matrix))
 		self.embedding = nn.Embedding.from_pretrained(torch.FloatTensor(embedding_matrix))
 
 		self.lstm = nn.LSTM(embedding_dim, hidden_dim, num_layers=1)
@@ -36,15 +37,32 @@ class LSTMClassifier(nn.Module):
 
 		self.hidden = self.init_hidden(batch.size(-1))
 
+		#print('batch: ', batch)
+		#print('lengths: ', lengths)
 		embeds = self.embedding(batch)
+		#print('embeds: ', embeds)
 		packed_input = pack_padded_sequence(embeds, lengths)
+		#print("packed_input.data.size: ", packed_input.data.size())
+		#print("packed_input.batch_sizes.size: ", packed_input.batch_sizes.size())
+
 		outputs, (ht, ct) = self.lstm(packed_input, self.hidden)
+		print("outputs: ", outputs)
+		print("outputs.size: ", outputs.data.size())
+		print("outputs.size: ", outputs.batch_sizes.size())
 
 		# ht is the last hidden state of the sequences
 		# ht = (1 x batch_size x hidden_dim)
 		# ht[-1] = (batch_size x hidden_dim)
+		print("ht[-1]: ", ht[-1])
+		print("ht[-1]: ", ht[-1].size())
 		output = self.dropout_layer(ht[-1])
+		print("output after dropout: ", output)
+		print("output after dropout: ", output.size())
 		output = self.hidden2out(output)
+		print("output after hidden2out: ", output)
+		print("output after hidden2out: ", output.size())
 		output = self.softmax(output)
+		print("output after softmax: ", output)
+		print("output after softmax: ", output.size())
 
 		return output

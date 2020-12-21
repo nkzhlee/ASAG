@@ -19,6 +19,7 @@ from sklearn.metrics import classification_report, confusion_matrix, accuracy_sc
 from data import PaddedTensorDataset
 from data import TextLoader
 from model import LSTMClassifier
+from logisticRegModel import LogisticRegression
 
 # python train.py --data_dir /Users/zhaohuilee/Desktop/RA/2020-fall/ASGA/data_test/train --test_dir /Users/zhaohuilee/Desktop/RA/2020-fall/ASGA/data_test/test --batch_size 4 --num_epochs 5
 
@@ -66,7 +67,9 @@ def loadEMbeddingMatrix(vocab, typeToLoad, embed_size = 100):
         embeddedCount = 0
         for word, i in vocab.items():  # 词
             embedding_vector = embedding_index.get(word)
-            # print(word)
+            #print('word: ', word)
+            #print('i: ', i)
+            #print('embedding_vector: ', embedding_vector)
 
             if embedding_vector is not None:
                 # print("++++")
@@ -74,6 +77,7 @@ def loadEMbeddingMatrix(vocab, typeToLoad, embed_size = 100):
                 embedding_matrix[i] = embedding_vector
                 embeddedCount += 1
         print('total_embedded:', embeddedCount, 'commen words')
+        #print('embedding matrix: ', embedding_matrix)
 
         return embedding_matrix
 
@@ -160,14 +164,15 @@ def train(args):
     print('Valid samples:', len(dev_data))
     print('Test samples:', len(test_data))
 
-    # print(char_vocab)
-    # print(tag_vocab)
+    # print('char_vocab: ', char_vocab)
+    # print("tag vocab: ", tag_vocab)
     # print(train_data)
     #assert 1==0
     embedding_matrix = loadEMbeddingMatrix(char_vocab, "glove", args.char_dim)
     print("-------------")
     print(embedding_matrix.shape)
-    model = LSTMClassifier(char_vocab_size, args.char_dim, args.hidden_dim, len(tag_vocab), embedding_matrix)
+    #model = LSTMClassifier(char_vocab_size, args.char_dim, args.hidden_dim, len(tag_vocab), embedding_matrix)
+    model = LogisticRegression(char_vocab_size, args.char_dim, args.hidden_dim, len(tag_vocab), embedding_matrix)
 
     optimizer = optim.SGD(model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
 
