@@ -94,13 +94,15 @@ def train_model(model, optimizer, train, dev, x_to_ix, y_to_ix, batch_size, max_
         y_true = list()
         y_pred = list()
         # print(train)
-        # print(x_to_ix)
+        #print('x_to_ix: ', x_to_ix)
         # print(y_to_ix)
         total_loss = 0
-        #print(train)
+        #print('train: ', train)
         for batch, targets, lengths, raw_data in utils.create_dataset(train, x_to_ix, y_to_ix, batch_size=batch_size):
-            batch, targets, lengths = utils.sort_batch(batch, targets, lengths)
+            #print("batch: ", batch.size())
+            #batch, targets, lengths = utils.sort_batch(batch, targets, lengths)
             model.zero_grad()
+            #print("batch after sort: ", batch.size())
             pred, loss = apply(model, criterion, batch, targets, lengths)
             loss.backward()
             optimizer.step()
@@ -121,7 +123,7 @@ def evaluate_validation_set(model, devset, x_to_ix, y_to_ix, criterion):
     y_pred = list()
     total_loss = 0
     for batch, targets, lengths, raw_data in utils.create_dataset(devset, x_to_ix, y_to_ix, batch_size=1):
-        batch, targets, lengths = utils.sort_batch(batch, targets, lengths)
+        #batch, targets, lengths = utils.sort_batch(batch, targets, lengths)
         pred, loss = apply(model, criterion, batch, targets, lengths)
         pred_idx = torch.max(pred, 1)[1]
         y_true += list(targets.int())
@@ -136,7 +138,7 @@ def evaluate_test_set(model, test, x_to_ix, y_to_ix):
     y_pred = list()
     #print(test)
     for batch, targets, lengths, raw_data in utils.create_dataset(test, x_to_ix, y_to_ix, batch_size=1):
-        batch, targets, lengths = utils.sort_batch(batch, targets, lengths)
+        #batch, targets, lengths = utils.sort_batch(batch, targets, lengths)
 
         pred = model(torch.autograd.Variable(batch), lengths.cpu().numpy())
         pred_idx = torch.max(pred, 1)[1]
@@ -150,6 +152,7 @@ def evaluate_test_set(model, test, x_to_ix, y_to_ix):
 
 def train(args):
     random.seed(args.seed)
+    print("args.data_dir: ", args.data_dir)
     data_loader = TextLoader(args.data_dir, args.test_dir)
 
     train_data = data_loader.train_data

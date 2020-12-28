@@ -54,7 +54,7 @@ class TextLoader:
           test_files.append(file_path)
 
     for file in train_files:
-      print(file)
+      print('train_file: ', file)
       doc = xml4h.parse(file)
 
       #YAJUR CODE

@@ -38,34 +38,54 @@ class LogisticRegression(nn.Module):
 
 	def forward(self, batch, lengths):
 
-		print("batch[0]: ", batch[0])
-		print("batch size: ", batch.size())
-		print("lengths: ", lengths)
+		#print("batch[0]: ", batch[0])
+		#print("batch size: ", batch.size())
+		#print("lengths: ", lengths)
 
+		#print("batch: ", batch)
+		#print("batch.size: ", batch.size())
 		embeds = self.embedding(batch)
 
 		#print("embeds: ", embeds)
-		print("embeds: ", embeds.size())
+		#print("embeds.size(): ", embeds.size())
 
-		packed_input = pack_padded_sequence(embeds, lengths) #to keep consistent vector
+		#Transpose matrix so that it becomes 64x50x82 and find average of third dimension
+		#The resulting matrix should be 64x50
+
+		#sentenceEmbed = self.sentenceEmbedding(embeds)
+		#print("sentenceEmbed: ", len(sentenceEmbed))
+		#print("sentenceEmbed: ", len(sentenceEmbed[0]))
+
+		#sentenceEmbed = torch.FloatTensor(sentenceEmbed)
+		#print("sentenceEmbed: ", sentenceEmbed)
+		#print("sentenceEmbed: ", sentenceEmbed.size())
+
+		sentenceEmbed = torch.mean(embeds,dim=1)
+		#print("sentenceEmbeds: ", sentenceEmbed)
+		#print("sentenceEmbed.size(): ", sentenceEmbed.size())
+
+		#print('embeds[0][0]: ', embeds[0][0])
+		#print('average of embeds[0][0]: ', sum(embeds[0][0])/len(embeds[0][0]))
+
+		#print("embeds: ", embeds)
+		#print("embeds: ", embeds.size())
+
+		#packed_input = pack_padded_sequence(embeds, lengths) #to keep consistent vector
 
 		#print("packed_input: ", packed_input)
-		print("packed_input.data.size: ", packed_input.data.size())
-		print("packed_input.batch_sizes.size: ", packed_input.batch_sizes.size())
+		#print("packed_input.data.size: ", packed_input.data.size())
+		#print("packed_input.batch_sizes.size: ", packed_input.batch_sizes.size())
 
-		#Does this feed both the packed input tensor vectors along with the batch lengths?
-		#I get an error running this, so I wonder if I have to just pass in the passed input
-		#tensor vector (packed_input.data instead of just packed_input)
+		linear = self.logreg(sentenceEmbed)
 
-		linear = self.logreg(packed_input.data)
-
-		print("linear.size: ", linear.size())
+		#print("linear.size: ", linear.size())
 
 		output = F.sigmoid(linear)
 		#print('output: ', output)
-		print('output.size: ', output.size())
+		#print('output.size: ', output.size())
+
 		output = self.softmax(output)
 		#print('output: ', output)
-		print('output: ', output.size())
+		#print('output: ', output.size())
 
 		return output

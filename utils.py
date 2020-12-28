@@ -20,28 +20,49 @@ def pad_sequences(vectorized_seqs, seq_lengths):
 	# fill the index
 	for idx, (seq, seqlen) in enumerate(zip(vectorized_seqs, seq_lengths)):
 		seq_tensor[idx, :seqlen] = torch.LongTensor(seq)
+
+	#print("seq_tensor: ", seq_tensor)
 	return seq_tensor
 
 
 def create_dataset(data, input2id, target2id, batch_size=1):
+	#print("data.size(): ", len(data))
 	vectorized_seqs = vectorized_data(data, input2id)
 	# print("++++++++++++")
-	# print(vectorized_seqs)
+	#print("vectorized_seqs: ", len(vectorized_seqs))
+	#print("vectorized_seqs: ", vectorized_seqs)
 
 	seq_lengths = torch.LongTensor([len(s) for s in vectorized_seqs])
+	#print("seq_lengths: ", seq_lengths)
+	#print("seq_lengths.size(): ", seq_lengths.size())
+
 	seq_tensor = pad_sequences(vectorized_seqs, seq_lengths)
 	target_tensor = torch.LongTensor([target2id[y] for _, y in data])
-	# print(seq_tensor.size())
-	# print(target_tensor.size())
+	#print("seq_tensor.size(): ", seq_tensor.size())
+	#print("target_tensor: ", target_tensor)
+	#print("target_tensor.size(): ", target_tensor.size())
 
 	raw_data = [x for x, _ in data]
+
+	#print("raw_data: ", raw_data)
 
 	return DataLoader(PaddedTensorDataset(seq_tensor, target_tensor, seq_lengths, raw_data), batch_size=batch_size)
 
 
 def sort_batch(batch, targets, lengths):
+	#print("batch: ", batch)
+	#print("targets: ", targets)
+	#print("lengths: ", lengths)
+
 	seq_lengths, perm_idx = lengths.sort(0, descending=True)
+	#print("seq_lengths: ", seq_lengths)
+	#print("perm_idx: ", perm_idx)
+
 	seq_tensor = batch[perm_idx]
+	#print("seq_tensor: ", seq_tensor)
+	#print("seq_tensor.size: ", seq_tensor.size())
+
 	target_tensor = targets[perm_idx]
+	#print("target_tensor.size: ", target_tensor.size())
 
 	return seq_tensor.transpose(0, 1), target_tensor, seq_lengths
