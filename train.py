@@ -19,19 +19,16 @@ from sklearn.metrics import classification_report, confusion_matrix, accuracy_sc
 from data import PaddedTensorDataset
 from data import TextLoader
 from model import LSTMClassifier
+from logisticRegModel import LogisticRegression
 
-# python train.py --data_dir /Users/zhaohuilee/Desktop/RA/2020-fall/ASGA/data_test/train --test_dir /Users/zhaohuilee/Desktop/RA/2020-fall/ASGA/data_test/test --batch_size 4 --num_epochs 5
-
-# python train.py --data_dir /Users/zhaohuilee/Desktop/RA/2020-fall/ASGA/sem_data/training/3way --test_dir /Users/zhaohuilee/Desktop/RA/2020-fall/ASGA/sem_data/test/3way --batch_size 64 --hidden_dim 32 --char_dim 100 --num_epochs 50 --learning_rate 0.001
-
-# python train.py --data_dir ./data/semeval2013-Task7-2and3way/training/2way/beetle --test_dir ./data/semeval2013-Task7-2and3way/test/2way/beetle/test-unseen-answers --batch_size 64 --hidden_dim 64 --char_dim 50 --num_epochs 50
+# python train.py  --batch_size 4 --hidden_dim 64 --char_dim 100 --num_epochs 1
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data_dir', type=str, default='./data/semeval2013-Task7-5way/beetle/train/Core/test',
-                                            help='data_directory')
+    parser.add_argument('--data_dir', type=str, default='./example/train',
+                        help='data_directory')
     parser.add_argument('--test_dir', type=str,
-                        default='/Users/zhaohuilee/Desktop/RA/2020-fall/ASGA/data/semeval2013-Task7-5way/beetle/test-unseen-questions/Core/test',
+                        default='./example/test',
                         help='data_directory')
     parser.add_argument('--hidden_dim', type=int, default=32,
                                             help='LSTM hidden dimensions')
@@ -51,7 +48,7 @@ def main():
     train(args)
 
 def loadEMbeddingMatrix(vocab, typeToLoad, embed_size = 100):
-    EMBEDDING_FILE = './model/glove.6B.50d.txt'
+    EMBEDDING_FILE = './model/glove.6B.100d.txt'
     if typeToLoad == 'glove' or typeToLoad == 'fasttext':
         embedding_index = dict()
         f = open(EMBEDDING_FILE)
@@ -66,7 +63,9 @@ def loadEMbeddingMatrix(vocab, typeToLoad, embed_size = 100):
         embeddedCount = 0
         for word, i in vocab.items():  # 词
             embedding_vector = embedding_index.get(word)
-            # print(word)
+            #print('word: ', word)
+            #print('i: ', i)
+            #print('embedding_vector: ', embedding_vector)
 
             if embedding_vector is not None:
                 # print("++++")
@@ -74,6 +73,7 @@ def loadEMbeddingMatrix(vocab, typeToLoad, embed_size = 100):
                 embedding_matrix[i] = embedding_vector
                 embeddedCount += 1
         print('total_embedded:', embeddedCount, 'commen words')
+        #print('embedding matrix: ', embedding_matrix)
 
         return embedding_matrix
 
@@ -84,19 +84,21 @@ def apply(model, criterion, batch, targets, lengths):
 
 
 def train_model(model, optimizer, train, dev, x_to_ix, y_to_ix, batch_size, max_epochs):
-    criterion = nn.NLLLoss(size_average=False)
+    criterion = nn.CrossEntropyLoss()
     for epoch in range(max_epochs):
         print('Epoch:', epoch)
         y_true = list()
         y_pred = list()
         # print(train)
-        # print(x_to_ix)
+        #print('x_to_ix: ', x_to_ix)
         # print(y_to_ix)
         total_loss = 0
-        #print(train)
+        #print('train: ', train)
         for batch, targets, lengths, raw_data in utils.create_dataset(train, x_to_ix, y_to_ix, batch_size=batch_size):
+            #print("batch: ", batch.size())
             batch, targets, lengths = utils.sort_batch(batch, targets, lengths)
             model.zero_grad()
+            #print("batch after sort: ", batch.size())
             pred, loss = apply(model, criterion, batch, targets, lengths)
             loss.backward()
             optimizer.step()
@@ -146,6 +148,7 @@ def evaluate_test_set(model, test, x_to_ix, y_to_ix):
 
 def train(args):
     random.seed(args.seed)
+    print("args.data_dir: ", args.data_dir)
     data_loader = TextLoader(args.data_dir, args.test_dir)
 
     train_data = data_loader.train_data
@@ -160,16 +163,17 @@ def train(args):
     print('Valid samples:', len(dev_data))
     print('Test samples:', len(test_data))
 
-    # print(char_vocab)
-    # print(tag_vocab)
+    # print('char_vocab: ', char_vocab)
+    # print("tag vocab: ", tag_vocab)
     # print(train_data)
     #assert 1==0
     embedding_matrix = loadEMbeddingMatrix(char_vocab, "glove", args.char_dim)
     print("-------------")
     print(embedding_matrix.shape)
-    model = LSTMClassifier(char_vocab_size, args.char_dim, args.hidden_dim, len(tag_vocab), embedding_matrix)
+    #model = LSTMClassifier(char_vocab_size, args.char_dim, args.hidden_dim, len(tag_vocab), embedding_matrix)
+    model = LogisticRegression(char_vocab_size, args.char_dim, args.hidden_dim, len(tag_vocab), embedding_matrix)
 
-    optimizer = optim.SGD(model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
+    optimizer = optim.SGD(model.parameters(), lr=args.learning_rate, momentum=0.9)
 
     model = train_model(model, optimizer, train_data, dev_data, char_vocab, tag_vocab, args.batch_size, args.num_epochs)
 
