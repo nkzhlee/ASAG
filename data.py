@@ -24,8 +24,9 @@ class TextLoader:
   def __init__(self, data_dir, test_dir):
 
     self.token2id = defaultdict(int)
+
     # prepare data
-    self.token_set, train_data, test_data = self.load_data(data_dir, test_dir)
+    self.token_set, train_data, test_data, self.ref_ans_data = self.load_data(data_dir, test_dir)
 
     # split data
     self.train_data, self.dev_data, self.test_data = self.split_data(train_data, test_data)
@@ -38,7 +39,9 @@ class TextLoader:
     tok = spacy.load('en')
     train_files, test_files = [], []
     token_set = set()
-    train_data, test_data = defaultdict(list), defaultdict(list)
+    train_data, test_data, ref_ans_data = defaultdict(list), defaultdict(list), defaultdict(list)
+
+
     for path, dirnames, filenames in os.walk(data_dir):
       # print('{} {} {}'.format(repr(path), repr(dirnames), repr(filenames)))
       for file in filenames:
@@ -52,6 +55,8 @@ class TextLoader:
         if os.path.splitext(file)[1] == '.xml':
           file_path = path + "/" + file
           test_files.append(file_path)
+
+    fileId = 0
 
     for file in train_files:
       print('train_file: ', file)
@@ -71,6 +76,7 @@ class TextLoader:
         #print(ref_ans.text)
         line = [token.text for token in tok.tokenizer(ref_ans.text)]
         train_data["correct"].append(line)
+        #ref_ans_data["correct"].append((line, fileId))
         for token in line:
           token_set.add(token)
 
@@ -83,6 +89,8 @@ class TextLoader:
         for token in line:
           token_set.add(token)
 
+      fileId += 1
+
     for file in test_files:
       print(file)
       doc = xml4h.parse(file)
@@ -94,7 +102,11 @@ class TextLoader:
         # for token in line:
         #   token_set.add(token)
 
-    return token_set, train_data, test_data
+
+
+    #print('train_data: ', train_data)
+
+    return token_set, train_data, test_data, ref_ans_data
 
 
   def split_data(self, train_data, test_data):
@@ -119,6 +131,7 @@ class TextLoader:
       cat_data = test_data[cat]
       print(cat, len(test_data[cat]))
       test += [(dat, cat) for dat in cat_data]
+
 
     all_data = random.sample(all_data, len(all_data))
 
@@ -173,6 +186,7 @@ class PaddedTensorDataset(Dataset):
         target_tensor (Tensor): contains sample targets (labels).
         length (Tensor): contains sample lengths.
         raw_data (Any): The data that has been transformed into tensor, useful for debugging
+        file_id (Any): Contains which file the answer resides in, used to determine reference answer
     """
 
     def __init__(self, data_tensor, target_tensor, length_tensor, raw_data):

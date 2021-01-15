@@ -33,17 +33,22 @@ class LogisticRegression(nn.Module):
 
 
 		embeds = self.embedding(batch)
+		#print('embeds: ', embeds.size())
 
 		# pack LSTM input
 		# why? see this link: https://gist.github.com/HarshTrivedi/f4e7293e941b17d19058f6fb90ab0fec
 		embed_pack = pack_padded_sequence(
 			embeds, lengths, batch_first=True
 		)
+		#print('embed_pack: ', embed_pack.data.size())
 		outputs, (ht, ct) = self.lstm(embed_pack)
 		# use hidden state ht as result
+		#print('ht.view(-1, self.hidden_dim)', ht.view(-1, self.hidden_dim).size())
 		output = self.logreg(ht.view(-1, self.hidden_dim))
+		#print('output: ', output.size())
 
 		output = F.sigmoid(output)
+		#print('output after sigmoid: ', output.size())
 
 
 		return output

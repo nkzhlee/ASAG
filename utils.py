@@ -10,6 +10,10 @@ from data import PaddedTensorDataset
 
 
 def vectorized_data(data, item2id):
+	#predata contains tuple of ans and fileID
+	#predata = [[token for token in seq] for seq, _ in data]
+
+	#ignores fileID and vectorizes student answer
 	return [[item2id[token] if token in item2id else item2id['UNK'] for token in seq] for seq, _ in data]
 
 
@@ -26,7 +30,7 @@ def pad_sequences(vectorized_seqs, seq_lengths):
 
 
 def create_dataset(data, input2id, target2id, batch_size=1):
-	#print("data.size(): ", len(data))
+	#print("data: ", data)
 	vectorized_seqs = vectorized_data(data, input2id)
 	# print("++++++++++++")
 	#print("vectorized_seqs: ", len(vectorized_seqs))
@@ -43,6 +47,8 @@ def create_dataset(data, input2id, target2id, batch_size=1):
 	#print("target_tensor.size(): ", target_tensor.size())
 
 	raw_data = [x for x, _ in data]
+
+	#fileID = [x for (_, x), _ in data]
 
 	#print("raw_data: ", raw_data)
 

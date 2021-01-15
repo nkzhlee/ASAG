@@ -18,10 +18,19 @@ from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
 from data import PaddedTensorDataset
 from data import TextLoader
+from asap_sas_data import ASAPSASTextLoader
 from model import LSTMClassifier
 from logisticRegModel import LogisticRegression
+from maLSTM import maLSTMClassifier
 
 # python train.py  --batch_size 4 --hidden_dim 64 --char_dim 100 --num_epochs 1
+
+#Sem:
+# python3 train.py --data_dir /Users/yajurtomar/psu/NLPResearch/Data/semeval2013-Task7-2and3way/training/2way/beetle --test_dir
+# /Users/yajurtomar/psu/NLPResearch/Data/semeval2013-Task7-2and3way/test/2way/beetle/test-unseen-questions  --batch_size 1 --hidden_dim 64 --char_dim 100 --num_epochs 50
+
+#ASAP:
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -38,7 +47,7 @@ def main():
                                             help='maximum number of epochs')
     parser.add_argument('--char_dim', type=int, default=100,
                                             help='character embedding dimensions')
-    parser.add_argument('--learning_rate', type=float, default=0.01,
+    parser.add_argument('--learning_rate', type=float, default=1,
                                             help='initial learning rate')
     parser.add_argument('--weight_decay', type=float, default=1e-4,
                                             help='weight_decay rate')
@@ -79,6 +88,7 @@ def loadEMbeddingMatrix(vocab, typeToLoad, embed_size = 100):
 
 def apply(model, criterion, batch, targets, lengths):
     pred = model(torch.autograd.Variable(batch), lengths.cpu().numpy())
+    #print('pred: ', pred)
     loss = criterion(pred, torch.autograd.Variable(targets))
     return pred, loss
 
@@ -95,7 +105,7 @@ def train_model(model, optimizer, train, dev, x_to_ix, y_to_ix, batch_size, max_
         total_loss = 0
         #print('train: ', train)
         for batch, targets, lengths, raw_data in utils.create_dataset(train, x_to_ix, y_to_ix, batch_size=batch_size):
-            #print("batch: ", batch.size())
+            #print("batch: ", batch)
             batch, targets, lengths = utils.sort_batch(batch, targets, lengths)
             model.zero_grad()
             #print("batch after sort: ", batch.size())
@@ -148,12 +158,18 @@ def evaluate_test_set(model, test, x_to_ix, y_to_ix):
 
 def train(args):
     random.seed(args.seed)
-    print("args.data_dir: ", args.data_dir)
-    data_loader = TextLoader(args.data_dir, args.test_dir)
+    #print("args.data_dir: ", args.data_dir)
+
+    #Sem Data:
+    #data_loader = TextLoader(args.data_dir, args.test_dir)
+
+    #ASAP Data:
+    data_loader = ASAPSASTextLoader(args.data_dir, args.test_dir)
 
     train_data = data_loader.train_data
     dev_data = data_loader.dev_data
     test_data = data_loader.test_data
+    #ref_ans_data = data_loader.ref_ans_data
 
     char_vocab = data_loader.token2id
     tag_vocab = data_loader.tag2id
@@ -163,15 +179,20 @@ def train(args):
     print('Valid samples:', len(dev_data))
     print('Test samples:', len(test_data))
 
-    # print('char_vocab: ', char_vocab)
-    # print("tag vocab: ", tag_vocab)
-    # print(train_data)
+    #print('Train_Data: ', train_data)
+    #print('Validation_Data: ', dev_data)
+    #print('Test_Data: ', test_data)
+
+    #print('char_vocab: ', char_vocab)
+    #print("tag vocab: ", tag_vocab)
+    #print(train_data)
     #assert 1==0
     embedding_matrix = loadEMbeddingMatrix(char_vocab, "glove", args.char_dim)
     print("-------------")
     print(embedding_matrix.shape)
     #model = LSTMClassifier(char_vocab_size, args.char_dim, args.hidden_dim, len(tag_vocab), embedding_matrix)
     model = LogisticRegression(char_vocab_size, args.char_dim, args.hidden_dim, len(tag_vocab), embedding_matrix)
+    #model = maLSTMClassifier(char_vocab_size, args.char_dim, args.hidden_dim, len(tag_vocab), embedding_matrix)
 
     optimizer = optim.SGD(model.parameters(), lr=args.learning_rate, momentum=0.9)
 
