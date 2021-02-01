@@ -16,6 +16,8 @@ class LSTMClassifier(nn.Module):
         self.vocab_size = vocab_size
 
         self.embedding = nn.Embedding(vocab_size, embedding_dim)
+
+
         self.lstm = nn.LSTM(embedding_dim, hidden_dim, num_layers=1)
 
         self.hidden2out = nn.Linear(hidden_dim, output_size)

@@ -39,6 +39,7 @@ class LogisticRegression(nn.Module):
 		embed_pack = pack_padded_sequence(
 			embeds, lengths, batch_first=True
 		)
+
 		outputs, (ht, ct) = self.lstm(embed_pack)
 		# use hidden state ht as result
 		output = self.logreg(ht.view(-1, self.hidden_dim))

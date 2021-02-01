@@ -39,6 +39,10 @@ class TextLoader:
     train_files, test_files = [], []
     token_set = set()
     train_data, test_data = defaultdict(list), defaultdict(list)
+    ref_ans_train, ref_ans_test = defaultdict(list), defaultdict(list)
+
+    print('test_dir: ', test_dir)
+
     for path, dirnames, filenames in os.walk(data_dir):
       # print('{} {} {}'.format(repr(path), repr(dirnames), repr(filenames)))
       for file in filenames:
@@ -46,20 +50,27 @@ class TextLoader:
           file_path = path + "/" + file
           train_files.append(file_path)
 
+    fileCount = 0
     for path, dirnames, filenames in os.walk(test_dir):
       # print('{} {} {}'.format(repr(path), repr(dirnames), repr(filenames)))
       for file in filenames:
+        fileCount+=1
+        print('fileCount: ', fileCount)
+        print('file: ', file)
         if os.path.splitext(file)[1] == '.xml':
           file_path = path + "/" + file
+          #print('test file_path: ', file_path)
           test_files.append(file_path)
 
+
     for file in train_files:
-      print('train_file: ', file)
+      #print('train_file: ', file)
       doc = xml4h.parse(file)
 
       #YAJUR CODE
       #This iterates through reference answers
       ref_ans_arr = []
+      ref_ans_train = []
       #Reference answers can either be iterable or only have one, so this if/else accounts for that
       if isinstance(doc.question.referenceAnswers.referenceAnswer, list):
         ref_ans_arr = doc.question.referenceAnswers.referenceAnswer
@@ -70,29 +81,64 @@ class TextLoader:
         #no need for cat because reference answers are all correct
         #print(ref_ans.text)
         line = [token.text for token in tok.tokenizer(ref_ans.text)]
-        train_data["correct"].append(line)
+        ref_ans_train.append(line)
+        train_data["correct"].append((line,ref_ans_train))
         for token in line:
           token_set.add(token)
+
+      stu_ans_arr = []
+
+      if isinstance(doc.question.studentAnswers.studentAnswer, list):
+        stu_ans_arr = doc.question.studentAnswers.studentAnswer
+      else:
+        stu_ans_arr.append(doc.question.studentAnswers.studentAnswer)
 
       #This iterates through student answers
-      for st_ans in doc.question.studentAnswers.studentAnswer:
+      for st_ans in stu_ans_arr:
         #print(st_ans.text)
         cat = st_ans["accuracy"]
         line = [token.text for token in tok.tokenizer(st_ans.text)]
-        train_data[cat].append(line)
+        train_data[cat].append((line, ref_ans_train))
         for token in line:
           token_set.add(token)
 
+
     for file in test_files:
-      print(file)
+      print('test file: ', file)
       doc = xml4h.parse(file)
-      for st_ans in doc.question.studentAnswers.studentAnswer:
+
+      ref_ans_arr = []
+      ref_ans_test = []
+      # Reference answers can either be iterable or only have one, so this if/else accounts for that
+      if isinstance(doc.question.referenceAnswers.referenceAnswer, list):
+        ref_ans_arr = doc.question.referenceAnswers.referenceAnswer
+      else:
+        ref_ans_arr.append(doc.question.referenceAnswers.referenceAnswer)
+
+      for ref_ans in ref_ans_arr:
+        # no need for cat because reference answers are all correct
+        # print(ref_ans.text)
+        line = [token.text for token in tok.tokenizer(ref_ans.text)]
+        ref_ans_test.append(line)
+        for token in line:
+          token_set.add(token)
+
+      stu_ans_arr = []
+
+      if isinstance(doc.question.studentAnswers.studentAnswer, list):
+        stu_ans_arr = doc.question.studentAnswers.studentAnswer
+      else:
+        stu_ans_arr.append(doc.question.studentAnswers.studentAnswer)
+
+      for st_ans in stu_ans_arr:
         #print(st_ans.text)
         cat = st_ans["accuracy"]
         line = [token.text for token in tok.tokenizer(st_ans.text)]
-        test_data[cat].append(line)
+        test_data[cat].append((line, ref_ans_test))
         # for token in line:
         #   token_set.add(token)
+
+    #print('train_data: ', test_data)
 
     return token_set, train_data, test_data
 
@@ -143,6 +189,7 @@ class TextLoader:
       test_cat.add(cat)
     print('Test categories:', sorted(list(test_cat)))
     #assert 1 == 0
+    #print('train_split: ', train_split)
     return train_split, dev_split, test
 
 
@@ -175,7 +222,7 @@ class PaddedTensorDataset(Dataset):
         raw_data (Any): The data that has been transformed into tensor, useful for debugging
     """
 
-    def __init__(self, data_tensor, target_tensor, length_tensor, raw_data):
+    def __init__(self, data_tensor, target_tensor, length_tensor, raw_data, refAns, refAnsLength):
         assert data_tensor.size(0) == target_tensor.size(0) == length_tensor.size(0)
         self.data_tensor = data_tensor
         # print("=========================")
@@ -184,10 +231,11 @@ class PaddedTensorDataset(Dataset):
         self.target_tensor = target_tensor
         self.length_tensor = length_tensor
         self.raw_data = raw_data
-
+        self.ref_ans = refAns
+        self.ref_ans_length = refAnsLength
 
     def __getitem__(self, index):
-        return self.data_tensor[index], self.target_tensor[index], self.length_tensor[index], self.raw_data[index]
+        return self.data_tensor[index], self.target_tensor[index], self.length_tensor[index], self.raw_data[index], self.ref_ans[index], self.ref_ans_length[index]
 
     def __len__(self):
         return self.data_tensor.size(0)
