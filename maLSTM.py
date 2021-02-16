@@ -60,19 +60,24 @@ class maLSTMClassifier(nn.Module):
         #studentAns: two dimension (batch size * word sequence)
         #refAns: three dimension (batch size * num of reference answers * word sequence)
 
-        hidden = self.init_hidden(len(studentAns.data))
+        # hidden = self.init_hidden(len(studentAns.data))
+
         repeat_num = refAns.shape[1]
         refAnsLengths = refAnsLengths[0]
+
         print('studentAns: ', studentAns.size())
         print('lengths: ', lengths)
         print('refAns: ', refAns.size())
         print('refAnsLengths: ', refAnsLengths)
+
         studentAns = studentAns.view(-1, studentAns.shape[0], studentAns.shape[1])
         #print('studentAns: ', studentAns.size())
         studentAns = studentAns.repeat(1, repeat_num, 1)
         lengths = lengths.repeat(repeat_num)
-
+        print('studentAns: ', studentAns.size())
+        print('lengths: ', lengths)
         emb = self.embedding(studentAns)
+        print('studentEmbed: ', emb.size())
         studentEmbed = emb.view(-1, emb.shape[2], emb.shape[3])
         print('studentEmbed: ', studentEmbed.size())
 
@@ -106,11 +111,21 @@ class maLSTMClassifier(nn.Module):
         #                                                          hidden_2[0].permute(1, 2, 0).view(batch_size, -1))
 
         similarity_scores = self.exponent_neg_manhattan_distance(stu_ht, ref_ht)
+        # 1 stu_answer [s1] ---> 2 ref_answers [r1, r2]
+        # [a, b]
+        # a: similarity score between (s1, r1)
+        # b: similarity score between (s1, r2)
+
         print(similarity_scores)
 
 
         max = similarity_scores.max()
         print(max)
+
+        # p_1 = max * w + b (not correct)
+        # p_2 = 1 - p_1
+
+        # output for one input vector: [p_1, p_2]
 
         assert 1 == 0
         return result
