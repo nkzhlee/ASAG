@@ -18,16 +18,18 @@ class maLSTMClassifier(nn.Module):
         #self.embedding = nn.Embedding(vocab_size, embedding_dim)
         self.embedding = nn.Embedding.from_pretrained(torch.FloatTensor(embedding_matrix))
 
-        self.lstm_1 = nn.LSTM(embedding_dim, hidden_dim, num_layers=1)
-        self.lstm_2 = nn.LSTM(embedding_dim, hidden_dim, num_layers=1)
+        self.lstm_1 = nn.LSTM(embedding_dim, hidden_dim, batch_first=True)
+        self.lstm_2 = nn.LSTM(embedding_dim, hidden_dim, batch_first=True)
 
         self.hidden2out = nn.Linear(hidden_dim, output_size)
         self.softmax = nn.LogSoftmax()
 
         self.dropout_layer = nn.Dropout(p=0.2)
 
+
     def exponent_neg_manhattan_distance(self, x1, x2):
-        return torch.exp(-torch.sum(torch.abs(x1-x2), dim=1))
+        ''' Helper function for the similarity estimate of the LSTMs outputs '''
+        return torch.exp(-torch.sum(torch.abs(x1 - x2), dim=1))
 
     def init_hidden(self, batch_size):
         #return (autograd.Variable(torch.randn(1, batch_size, self.hidden_dim)),
@@ -59,35 +61,56 @@ class maLSTMClassifier(nn.Module):
         #refAns: three dimension (batch size * num of reference answers * word sequence)
 
         hidden = self.init_hidden(len(studentAns.data))
-
+        repeat_num = refAns.shape[1]
+        refAnsLengths = refAnsLengths[0]
         print('studentAns: ', studentAns.size())
-        print('lengths: ', len(lengths))
+        print('lengths: ', lengths)
         print('refAns: ', refAns.size())
-        print('refAnsLengths: ', len(refAnsLengths))
+        print('refAnsLengths: ', refAnsLengths)
+        studentAns = studentAns.view(-1, studentAns.shape[0], studentAns.shape[1])
+        #print('studentAns: ', studentAns.size())
+        studentAns = studentAns.repeat(1, repeat_num, 1)
+        lengths = lengths.repeat(repeat_num)
 
-        studentEmbed = self.embedding(studentAns)
-        #print('studentEmbed: ', studentEmbed)
+        emb = self.embedding(studentAns)
+        studentEmbed = emb.view(-1, emb.shape[2], emb.shape[3])
         print('studentEmbed: ', studentEmbed.size())
 
-        refEmbed = self.embedding(refAns)
-        #print('studentEmbed: ', refEmbed)
+        emb = self.embedding(refAns)
+        refEmbed = emb.view(-1, emb.shape[2], emb.shape[3])
         print('refEmbed: ', refEmbed.size())
 
         studentEmbedPack = pack_padded_sequence(
 			studentEmbed, lengths, batch_first=True
 		)
+
         print('studentEmbedPack: ', studentEmbedPack.data.size())
 
         refEmbedPack = pack_padded_sequence(
-            refEmbed, lengths, batch_first=True
+            refEmbed, refAnsLengths, batch_first=True
         )
         print('refEmbedPack: ', refEmbedPack.data.size())
 
-        studentOutputs, (stu_ht, stu_ct) = self.lstm_1(studentEmbedPack, hidden)
-        refAnsOutputs, (ques_ht, ques_ct) = self.lstm_2(refEmbedPack, hidden)
+        studentOutputs, (stu_ht, stu_ct) = self.lstm_1(studentEmbedPack)
+        refAnsOutputs, (ref_ht, ref_ct) = self.lstm_2(refEmbedPack)
+        print('stu_ht: ', stu_ht.size())
+        print('ques_ht: ', ref_ht.size())
+
+        stu_ht = stu_ht.view(stu_ht.shape[1], stu_ht.shape[2])
+        ref_ht = ref_ht.view(ref_ht.shape[1], ref_ht.shape[2])
 
         print('stu_ht: ', stu_ht.size())
-        print('ques_ht: ',ques_ht.size())
+        print('ques_ht: ', ref_ht.size())
+
+        # similarity_scores = self.exponent_neg_manhattan_distance(hidden_1[0].permute(1, 2, 0).view(batch_size, -1),
+        #                                                          hidden_2[0].permute(1, 2, 0).view(batch_size, -1))
+
+        similarity_scores = self.exponent_neg_manhattan_distance(stu_ht, ref_ht)
+        print(similarity_scores)
 
 
-        return output
+        max = similarity_scores.max()
+        print(max)
+
+        assert 1 == 0
+        return result

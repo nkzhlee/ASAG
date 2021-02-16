@@ -26,6 +26,7 @@ from maLSTM import maLSTMClassifier
 
 # python3 train.py --data_dir /Users/yajurtomar/psu/NLPResearch/Data/semeval2013-Task7-2and3way/training/2way/beetle --test_dir /Users/yajurtomar/psu/NLPResearch/Data/semeval2013-Task7-2and3way/test/2way/beetle/test-unseen-questions  --batch_size 1 --hidden_dim 16 --char_dim 100 --num_epochs 50
 
+# python train.py
 
 def main():
     parser = argparse.ArgumentParser()
@@ -36,7 +37,7 @@ def main():
                         help='data_directory')
     parser.add_argument('--hidden_dim', type=int, default=32,
                                             help='LSTM hidden dimensions')
-    parser.add_argument('--batch_size', type=int, default=8,
+    parser.add_argument('--batch_size', type=int, default=1,
                                             help='size for each minibatch')
     parser.add_argument('--num_epochs', type=int, default=20,
                                             help='maximum number of epochs')
@@ -52,7 +53,7 @@ def main():
     train(args)
 
 def loadEMbeddingMatrix(vocab, typeToLoad, embed_size = 100):
-    EMBEDDING_FILE = './model/glove.6B.100d.txt'
+    EMBEDDING_FILE = '/Users/zhaohuilee/Documents/ASAG/model/glove.6B.100d.txt'
     if typeToLoad == 'glove' or typeToLoad == 'fasttext':
         embedding_index = dict()
         f = open(EMBEDDING_FILE)
@@ -88,6 +89,7 @@ def apply(model, criterion, batch, targets, lengths, refAns, refAnsLengths):
     #print('refAnsLengths: ', refAnsLengths)
 
     pred = model(torch.autograd.Variable(batch), lengths.cpu().numpy(), torch.autograd.Variable(refAns), refAnsLengths.cpu().numpy())
+    print('pred: ', pred)
     #pred = model(torch.autograd.Variable(batch), lengths.cpu().numpy())
     loss = criterion(pred, torch.autograd.Variable(targets))
     return pred, loss
@@ -107,7 +109,7 @@ def train_model(model, optimizer, train, dev, x_to_ix, y_to_ix, batch_size, max_
         #print('train: ', train)
         for batch, targets, lengths, raw_data, ref_ans, ref_ans_lengths in utils.create_dataset(train, x_to_ix, y_to_ix, batch_size=batch_size):
             #print('batch: ', batch)
-            #print('targets: ', targets)
+            print('targets: ', targets)
             #print('lengths: ', lengths)
             #print('refAns: ', refAns)
 
@@ -126,6 +128,9 @@ def train_model(model, optimizer, train, dev, x_to_ix, y_to_ix, batch_size, max_
             optimizer.step()
             
             pred_idx = torch.max(pred, 1)[1]
+            print('pred_idx: ', pred_idx)
+            print(pred_idx.data.int())
+            assert 1==0
             y_true += list(targets.int())
             y_pred += list(pred_idx.data.int())
             total_loss += loss
@@ -201,7 +206,7 @@ def train(args):
     #model = LogisticRegression(char_vocab_size, args.char_dim, args.hidden_dim, len(tag_vocab), embedding_matrix)
 
     model = maLSTMClassifier(char_vocab_size, args.char_dim, args.hidden_dim, len(tag_vocab), embedding_matrix)
-    model.init_weights()
+    # model.init_weights()
 
     optimizer = optim.SGD(model.parameters(), lr=args.learning_rate, momentum=0.9)
 
