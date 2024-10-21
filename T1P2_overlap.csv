@@ -1,0 +1,8 @@
+a_id,a_text,a_q_id,MB,MB15,JM,SL,num_annotators,num_ratings,num_ratings-1,maxvotes,random,True Label,AsRRN Prediction,SFRN Prediction
+R_ywhx9VDaHWzGaA1_q2_a,play notes and assess the probability of her right and wrong answers,q2_a,1.0,1.0,1.0,1.0,4,1,0,4,0,1,2,2
+R_UawbgkpZaqjua8F_q2_a,"Yes, because you can infer that if she practices with this method enough she will begin to pick out the noes solely based on sound at a higher level of accuracy.",q2_a,1.0,,1.0,1.0,3,1,0,3,0,1,2,2
+R_6RktEQMK2li2kVP_q4_a,Yes statistical inference should be used because there are multiple different factors that affect the average found and they need to be linked.,q4_a,1.0,,1.0,1.0,3,1,0,3,0,1,2,2
+R_324UbMKo5EPWTJ6_q4_a,"Yes, averaging is a statistical inference.",q4_a,,2.0,1.0,1.0,3,2,1,2,0,1,2,2
+R_2wBSrzMDz86nZtv_q2_a,"Statistical inference can be used to determine whether Carla as a good ear for music with the use of random numbers. Before using the random numbers, we have to see the percentage of correctness someone needs to score in order to be qualified to be ""good ear for music.""",q2_a,2.0,,1.0,1.0,3,2,1,2,0,1,2,2
+R_2vizuByAiaPctAn_q4_a,They could use the correlation of larger/more fish with how long they fished. Their average amount of fish and size and compare,q4_a,1.0,,0.0,1.0,3,2,1,2,0,1,2,2
+R_11bVEqqnpNibyGu_q2_a,You should use statistical inference in this scenario because it can measure the accuracy of her knowledge of identifying notes at random and free of bias.,q2_a,2.0,,1.0,1.0,3,2,1,2,0,1,2,2

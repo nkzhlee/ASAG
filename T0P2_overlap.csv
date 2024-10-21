@@ -1,0 +1,3 @@
+a_id,a_text,a_q_id,MB,MB15,JM,SL,num_annotators,num_ratings,num_ratings-1,maxvotes,random,True Label,AsRRN Prediction,SFRN Prediction
+R_3suHzxtuLtxpssL_q3_b,"Work out with the other company that if they get 5 bad for the current order, then the next one they get 155, rather than 150 to make up for it",q3_b,0.0,,0.0,0.0,3,1,0,3,0,0,2,2
+R_3KAqMZMVdmLMd6q_q3_b,I would decide to reject the screens based on the statistical inference. If the number of bad screens is more than 5% than I would choose the reject the screens.,q3_b,0.0,,0.0,2.0,3,2,1,2,0,0,2,2
